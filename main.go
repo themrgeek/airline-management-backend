@@ -4,28 +4,24 @@ import (
 	"log"
 
 	"github.com/themrgeek/airline-management-backend/config"
-	controller "github.com/themrgeek/airline-management-backend/controller"
 	model "github.com/themrgeek/airline-management-backend/model"
 	"github.com/themrgeek/airline-management-backend/router"
 )
 
 func main() {
-	// Initialize database
+	// Initialize database connection
 	config.ConnectDB()
 
-	// Initialize Twilio (replace with your actual credentials)
-	controller.InitTwilio("your-account-sid", "your-auth-token")
-
-	// Migrate models
-	db := config.DB
-	db.AutoMigrate(&model.User{}, &model.OTP{})
+	// Auto migrate models
+	if err := config.DB.AutoMigrate(&model.User{}, &model.OTP{}); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
 
 	// Setup router
 	r := router.SetupRouter()
 
 	// Start server
-	log.Println("Server starting on :8080...")
 	if err := r.Run(":8080"); err != nil {
-		log.Fatal("Failed to start server:", err)
+		log.Fatalf("Failed to start server: %v", err)
 	}
 }
