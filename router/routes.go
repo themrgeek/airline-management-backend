@@ -25,6 +25,9 @@ func InitializeRouter(db *sql.DB) *gin.Engine {
 		`, getTotalUsers(db))
 	})
 
+	// Set up authentication routes
+	SetupAuthRoutes(router, db)
+
 	return router
 }
 
@@ -36,12 +39,13 @@ func getTotalUsers(db *sql.DB) int {
 	}
 	return count
 }
+
 func SetupAuthRoutes(r *gin.Engine, db *sql.DB) {
 	authController := controllers.AuthController{DB: db}
 
 	authGroup := r.Group("/auth")
 	{
-		authGroup.POST("/login", authController.Login)
-		authGroup.POST("/signup", authController.Signup)
+		authGroup.POST("/login", authController.Login)   // POST /auth/login
+		authGroup.POST("/signup", authController.Signup) // POST /auth/signup
 	}
 }

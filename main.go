@@ -34,8 +34,8 @@ func loadConfig() (*Config, error) {
 		DBHost:     os.Getenv("DB_HOST"),
 		DBPort:     os.Getenv("DB_PORT"),
 		DBName:     os.Getenv("DB_NAME"),
-		CertFile:   os.Getenv("SSL_CERT_FILE"),
-		KeyFile:    os.Getenv("SSL_KEY_FILE"),
+		CertFile:   "cert.pem",
+		KeyFile:    "key.pem",
 	}, nil
 }
 
