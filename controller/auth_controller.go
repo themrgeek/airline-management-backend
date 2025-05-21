@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/themrgeek/airline-management-backend/model"
-
+	"github.com/themrgeek/airline-management-backend/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -58,6 +58,10 @@ func LoginUser(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	// Generate JWT token (you'll implement this)
-	token := GenerateJWT(user.ID, user.Role)
+	token, err := utils.GenerateJWT(user.ID, user.Role)
+	if err != nil {
+		http.Error(w, "Error generating token", http.StatusInternalServerError)
+		return
+	}
 	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }
