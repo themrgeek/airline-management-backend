@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
+	"os"
 
 	"github.com/themrgeek/airline-management-backend/config"
 	"github.com/themrgeek/airline-management-backend/model"
@@ -30,9 +30,19 @@ func main() {
 	model.CreateUserTable(db)
 
 	// Setup router
-	r := router.SetupRoutes(db)
+	handler := router.SetupRoutes(db)
 
-	// Start server
-	fmt.Println("Server running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	// Get certificate and key file paths from environment variables
+	certFile := os.Getenv("TLS_CERT_FILE")
+	keyFile := os.Getenv("TLS_KEY_FILE")
+
+	if certFile == "" || keyFile == "" {
+		log.Fatal("TLS certificate and key file paths must be specified in .env file")
+	}
+
+	// Start HTTPS server
+	fmt.Println("Server starting on :443 with HTTPS")
+	if err := router.StartServer(handler, certFile, keyFile); err != nil {
+		log.Fatal("Server failed to start:", err)
+	}
 }

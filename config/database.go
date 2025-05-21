@@ -4,31 +4,55 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
+// ConnectDB establishes a connection to the MySQL database using environment variables
+// Returns a database connection pool and error if any
 func ConnectDB() (*sql.DB, error) {
-	// 1) Loading environment variables
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbName := os.Getenv("DB_NAME")
-	// 2) Connect to the database
-	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
-		dbUser, dbPassword, dbHost, dbPort, dbName)
+	// Get database configuration from environment variables
+	dbConfig := struct {
+		user     string
+		password string
+		host     string
+		port     string
+		name     string
+	}{
+		user:     os.Getenv("DB_USER"),
+		password: os.Getenv("DB_PASSWORD"),
+		host:     os.Getenv("DB_HOST"),
+		port:     os.Getenv("DB_PORT"),
+		name:     os.Getenv("DB_NAME"),
+	}
+
+	// Validate required environment variables
+	if dbConfig.user == "" || dbConfig.password == "" || dbConfig.host == "" ||
+		dbConfig.port == "" || dbConfig.name == "" {
+		return nil, fmt.Errorf("missing required database environment variables")
+	}
+
+	// Create the connection string
+	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&timeout=30s",
+		dbConfig.user, dbConfig.password, dbConfig.host, dbConfig.port, dbConfig.name)
+
+	// Open database connection
 	db, err := sql.Open("mysql", connStr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error opening database: %w", err)
 	}
-	// 3) Verify the connection
-	err = db.Ping()
-	if err != nil {
-		return nil, err
+
+	// Configure connection pool
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(5 * time.Minute)
+
+	// Verify the connection
+	if err = db.Ping(); err != nil {
+		db.Close() // Close the connection if ping fails
+		return nil, fmt.Errorf("error connecting to the database: %w", err)
 	}
-	// 4) Handle errors
-	if err != nil {
-		return nil, err
-	}
-	// 5) Return the database connection
+
 	return db, nil
 }
