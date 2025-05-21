@@ -1,20 +1,25 @@
 package router
 
 import (
-	controller "github.com/themrgeek/airline-management-backend/controller"
+	"database/sql"
+	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/themrgeek/airline-management-backend/controller"
+
+	"github.com/gorilla/mux"
 )
 
-func SetupRouter() *gin.Engine {
-	r := gin.Default()
+func SetupRoutes(db *sql.DB) *mux.Router {
+	r := mux.NewRouter()
 
-	auth := r.Group("/auth")
-	{
-		auth.POST("/register", controller.Register)
-		auth.POST("/verify", controller.VerifyOTP)
-		auth.POST("/login", controller.Login)
-	}
+	// User Auth Routes
+	r.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
+		controller.RegisterUser(w, r, db)
+	}).Methods("POST")
+
+	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		controller.LoginUser(w, r, db)
+	}).Methods("POST")
 
 	return r
 }

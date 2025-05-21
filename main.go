@@ -1,27 +1,38 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/themrgeek/airline-management-backend/config"
-	model "github.com/themrgeek/airline-management-backend/model"
+	"github.com/themrgeek/airline-management-backend/model"
 	"github.com/themrgeek/airline-management-backend/router"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Initialize database connection
-	config.ConnectDB()
-
-	// Auto migrate models
-	if err := config.DB.AutoMigrate(&model.User{}, &model.OTP{}); err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
+	// Load .env
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
 	}
+
+	// Connect to database
+	db, err := config.ConnectDB()
+	if err != nil {
+		log.Fatal("DB connection failed")
+	}
+	defer db.Close()
+
+	// Create tables
+	model.CreateUserTable(db)
 
 	// Setup router
-	r := router.SetupRouter()
+	r := router.SetupRoutes(db)
 
 	// Start server
-	if err := r.Run(":8080"); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
+	fmt.Println("Server running on :8080")
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
