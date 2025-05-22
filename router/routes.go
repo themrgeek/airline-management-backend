@@ -59,6 +59,9 @@ func setupBasicRoutes(r *mux.Router, db *sql.DB) {
 	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		controller.LoginUser(w, r, db)
 	}).Methods(http.MethodPost)
+	r.HandleFunc("/update-password", func(w http.ResponseWriter, r *http.Request) {
+		controller.UpdatePassword(w, r, db)
+	}).Methods(http.MethodPut)
 }
 
 // homeHandler handles the root endpoint
